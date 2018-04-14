@@ -35,7 +35,6 @@ public class MsgProcessor {
 
     private void makeAdjustment(String message){
         //TODO: validate
-
         String[] tokens = message.split(" ");
         String productType = tokens[2];
         Integer adjustmentValue = Integer.parseInt(tokens[1].replaceFirst(CURRENCY, ""));
@@ -84,7 +83,7 @@ public class MsgProcessor {
         salesPerProduct.get(prodType).set(1, updatedTotalValue);
 
         //check if we need to print the sales report
-
+        Integer numberOfMessages = sales.size();
 
         //check if we need to print the adjustments report
     }
