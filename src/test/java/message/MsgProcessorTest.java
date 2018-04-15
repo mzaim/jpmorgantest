@@ -93,7 +93,38 @@ public class MsgProcessorTest {
     }
 
     @Test
-    public void testPrintReports(){
+    public void testAddSale(){
+        Sale s = new Sale("apple", 10);
 
+        m.addSale(s);
+
+        List actualSales = m.getSales();
+        assertThat(actualSales.size(), is(1));
+        assertThat(actualSales.get(0), is(s));
+    }
+
+    @Test
+    public void testUpdateSalesPerProd(){
+        List<Integer> appleSales = new ArrayList<>();
+        appleSales.add(0, 100);
+        appleSales.add(1, 2000);
+        List<Integer> pearSales  = new ArrayList<>();
+        pearSales.add(0, 50);
+        pearSales.add(1, 5000);
+        Map<String, List<Integer>> salesPerProd = new HashMap<>();
+        salesPerProd.put("apple", appleSales);
+        salesPerProd.put("pear", pearSales);
+        m.setSalesPerProduct(salesPerProd);
+
+        Sale s = new Sale("apple", 10);
+        m.updateSalesPerProd(s);
+
+        Map<String, List<Integer>> actual = m.getSalesPerProduct();
+        salesPerProd.get("apple").set(0, 101);
+        Map<String, List<Integer>> expected = new HashMap<>(salesPerProd);
+        expected.get("apple").set(0, 101);
+        expected.get("apple").set(1, 2010);
+
+        assertThat(actual, is(expected));
     }
 }

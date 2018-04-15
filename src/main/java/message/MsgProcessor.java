@@ -20,6 +20,11 @@ public class MsgProcessor {
     public static final int SALE_REPORT_INTERVAL = 10;
     public static final int ADJUSTMENTS_REPORT_INTERVAL = 50;
 
+    /**
+     * entry point
+     * @param type
+     * @param message
+     */
     public void processMessage(MsgType type, String message){
         switch(type){
             case SINGLE: addSingle(message);
@@ -52,7 +57,7 @@ public class MsgProcessor {
         adjustments.add(adjustment);
     }
 
-    private void adjustSales(Adjustment adjustment){
+    void adjustSales(Adjustment adjustment){
         sales.stream()
                 //get sales that have the required product type
                 .filter(sale -> sale.getProductType().equals(adjustment.getProductType()))
@@ -77,9 +82,9 @@ public class MsgProcessor {
         }
     }
 
-    private Sale createSingle(String message){
+    Sale createSingle(String message){
         //assume last word is the price
-        Integer price = Integer.parseInt(message.substring(message.lastIndexOf(" "), message.lastIndexOf(CURRENCY)));
+        Integer price = Integer.parseInt(message.substring(message.lastIndexOf(" ") + 1, message.lastIndexOf(CURRENCY)));
         //product type should be the first word
         String productType = message.substring(0, message.indexOf(" "));
 
@@ -101,11 +106,24 @@ public class MsgProcessor {
         return sale;
     }
 
-    private void addSale(Sale sale){
+    void addSale(Sale sale){
         sales.add(sale);
+        updateSalesPerProd(sale);
+        printReports();
+    }
+
+    void updateSalesPerProd(Sale sale){
+        String prodType = sale.getProductType();
+
+        //product type was never recorded before
+        if(salesPerProduct.get(prodType) == null){
+            List<Integer> values = new ArrayList<>();
+            values.add(0, sale.getOccurences());
+            values.add(1, sale.getPrice());
+            salesPerProduct.put(prodType, values);
+        }
 
         //update the total number of sales per product
-        String prodType = sale.getProductType();
         Integer currentNbrOfSales = salesPerProduct.get(prodType).get(0);
         Integer updatedNbrOfSales = currentNbrOfSales + sale.getOccurences();
         salesPerProduct.get(prodType).set(0, updatedNbrOfSales);
@@ -114,7 +132,9 @@ public class MsgProcessor {
         Integer currentTotalValue = salesPerProduct.get(prodType).get(1);
         Integer updatedTotalValue = currentTotalValue + sale.getPrice();
         salesPerProduct.get(prodType).set(1, updatedTotalValue);
+    }
 
+    private void printReports(){
         //check if we need to print the sales report
         Integer numberOfMessages = sales.size();
         if(numberOfMessages % SALE_REPORT_INTERVAL == 0){
@@ -152,26 +172,28 @@ public class MsgProcessor {
     }
 
     /**
-     * package-protected setter used only for testing
+     * package-protected getters and setters used only for testing
      * @param sales
      */
+
     void setSales(List<Sale> sales) {
         this.sales = sales;
     }
 
-    /**
-     * package-protected setter used only for testing
-     * @param adjustments
-     */
+    List<Sale> getSales(){
+        return sales;
+    }
+
     void setAdjustments(List<Adjustment> adjustments) {
         this.adjustments = adjustments;
     }
 
-    /**
-     * package-protected setter used only for testing
-     * @param salesPerProduct
-     */
     void setSalesPerProduct(Map<String, List<Integer>> salesPerProduct) {
         this.salesPerProduct = salesPerProduct;
     }
+
+    Map<String, List<Integer>> getSalesPerProduct(){
+        return salesPerProduct;
+    }
+
 }
