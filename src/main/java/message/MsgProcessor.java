@@ -3,16 +3,17 @@ package message;
 import java.io.IOException;
 import java.util.*;
 
+
 public class MsgProcessor {
 
-    private List<Sale> sales = new ArrayList<Sale>();
-    private List<Adjustment> adjustments = new ArrayList<Adjustment>();
+    private List<Sale> sales = new ArrayList<>();
+    private List<Adjustment> adjustments = new ArrayList<>();
     /**
      * map the product type to a list that contains
      * total number of sales on position 0
      * and total value on position 1
      */
-    private Map<String, ArrayList<Integer>> salesPerProduct =  new HashMap<>();
+    private Map<String, List<Integer>> salesPerProduct =  new HashMap<>();
 
 
     public static final String CURRENCY = "p";
@@ -47,15 +48,33 @@ public class MsgProcessor {
         OperationType opType = OperationType.valueOf(tokens[0]);
 
         Adjustment adjustment = new Adjustment(opType, productType, adjustmentValue);
+        adjustSales(adjustment);
         adjustments.add(adjustment);
     }
 
     private void adjustSales(Adjustment adjustment){
         sales.stream()
-                .filter(sale -> sale.getProductType().equals(adjustment.getProductType())) //get sales that have the required product type
+                //get sales that have the required product type
+                .filter(sale -> sale.getProductType().equals(adjustment.getProductType()))
+                //iterate through the sales and apply the required adjustment
                 .forEach(sale -> {
-
+                    Integer newValue = applyOperation(sale.getPrice(), adjustment.getOperationType(), adjustment.getModifier());
+                    sale.setPrice(newValue);
                 });
+    }
+
+    private Integer applyOperation(Integer value, OperationType operation, Integer modifier){
+        switch(operation) {
+            case ADD:
+                return value + modifier;
+            case MULTIPLY:
+                return value * modifier;
+            case SUBSTRACT:
+                return value - modifier;
+            default:
+                //should never end here
+                return value;
+        }
     }
 
     private Sale createSingle(String message){
@@ -68,7 +87,7 @@ public class MsgProcessor {
         return sale;
     }
 
-    private Sale createMultiple(String message){
+    Sale createMultiple(String message){
         //split the message into words
         String[] tokens = message.split(" ");
         //product type should be the 4th word
@@ -107,7 +126,7 @@ public class MsgProcessor {
         }
     }
 
-    private void reportSalesSummary(){
+    void reportSalesSummary(){
         salesPerProduct.entrySet()
                 .stream()
                 .forEach(entry -> {
@@ -117,18 +136,42 @@ public class MsgProcessor {
                 });
     }
 
-    private void reportAdjustments(){
+    void reportAdjustments(){
         System.out.println("Application is pausing, will not accept new messages");
         adjustments.stream()
                 .forEach(adjustment ->
                         System.out.println(adjustment.toString())
                 );
         System.out.println("Resume ?");
-        //any user input will resume the application
+        //enter key will resume the application
         try {
             System.in.read();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * package-protected setter used only for testing
+     * @param sales
+     */
+    void setSales(List<Sale> sales) {
+        this.sales = sales;
+    }
+
+    /**
+     * package-protected setter used only for testing
+     * @param adjustments
+     */
+    void setAdjustments(List<Adjustment> adjustments) {
+        this.adjustments = adjustments;
+    }
+
+    /**
+     * package-protected setter used only for testing
+     * @param salesPerProduct
+     */
+    void setSalesPerProduct(Map<String, List<Integer>> salesPerProduct) {
+        this.salesPerProduct = salesPerProduct;
     }
 }

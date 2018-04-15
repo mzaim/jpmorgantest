@@ -1,5 +1,7 @@
 package message;
 
+import java.util.Objects;
+
 public class Sale {
 
     private String productType;
@@ -40,5 +42,21 @@ public class Sale {
 
     public void setPrice(Integer price) {
         this.price = price;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Sale sale = (Sale) o;
+        return Objects.equals(productType, sale.productType) &&
+                Objects.equals(occurences, sale.occurences) &&
+                Objects.equals(price, sale.price);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(productType, occurences, price);
     }
 }
