@@ -1,11 +1,17 @@
 package message;
 
+import java.io.IOException;
 import java.util.*;
 
 public class MsgProcessor {
 
     private List<Sale> sales = new ArrayList<Sale>();
     private List<Adjustment> adjustments = new ArrayList<Adjustment>();
+    /**
+     * map the product type to a list that contains
+     * total number of sales on position 0
+     * and total value on position 1
+     */
     private Map<String, ArrayList<Integer>> salesPerProduct =  new HashMap<>();
 
 
@@ -42,6 +48,14 @@ public class MsgProcessor {
 
         Adjustment adjustment = new Adjustment(opType, productType, adjustmentValue);
         adjustments.add(adjustment);
+    }
+
+    private void adjustSales(Adjustment adjustment){
+        sales.stream()
+                .filter(sale -> sale.getProductType().equals(adjustment.getProductType())) //get sales that have the required product type
+                .forEach(sale -> {
+
+                });
     }
 
     private Sale createSingle(String message){
@@ -84,15 +98,37 @@ public class MsgProcessor {
 
         //check if we need to print the sales report
         Integer numberOfMessages = sales.size();
-
+        if(numberOfMessages % SALE_REPORT_INTERVAL == 0){
+            reportSalesSummary();
+        }
         //check if we need to print the adjustments report
+        if(numberOfMessages >= ADJUSTMENTS_REPORT_INTERVAL){
+            reportAdjustments();
+        }
     }
 
-    private void reportLastTen(){
-
+    private void reportSalesSummary(){
+        salesPerProduct.entrySet()
+                .stream()
+                .forEach(entry -> {
+                        System.out.println(entry.getKey() + " has made ");
+                        System.out.println(entry.getValue().get(0) + " sales");
+                        System.out.println("with a total value of " + entry.getValue().get(1));
+                });
     }
 
     private void reportAdjustments(){
-        adjustments.stream().forEach(a -> System.out.println(a.toString()));
+        System.out.println("Application is pausing, will not accept new messages");
+        adjustments.stream()
+                .forEach(adjustment ->
+                        System.out.println(adjustment.toString())
+                );
+        System.out.println("Resume ?");
+        //any user input will resume the application
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
